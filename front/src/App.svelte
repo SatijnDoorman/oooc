@@ -2,9 +2,7 @@
     let global_state = 'start'
     let num_cells= 10
     let snake = {
-        /* 'position': [[0,0], [1,0],[2,0]], */
-        'position': [0,0],
-
+        'position': [[0,0], [1,0],[2,0]],
         'direction': 'up'
     }
     let baby = {
@@ -38,7 +36,7 @@
     }
 
     function isSnake(cell, snake) {
-        return cell[0] == snake.position[0] && cell[1] == snake.position[1]
+        return arrayContainsArray(snake.position, cell)
     }
     function isBaby(cell, baby) {
         return cell[0] == baby.position[0] && cell[1] == baby.position[1]
@@ -63,25 +61,30 @@
 
     function updateSnake() {
 
+        let newhead = [...snake.position[0]]
+        
         if (snake.direction === 'right') {
-            snake.position[1]++;
+            newhead[1]++;
         } else if (snake.direction === 'down') {
-            snake.position[0]++;
+            newhead[0]++;
         } else if (snake.direction === 'left') {
-            snake.position[1]--;
+            newhead[1]--;
         } else if (snake.direction === 'up') {
-            snake.position[0]--;
+            newhead[0]--;
         }
 
-        if (snake.position[0] < 0) {
-            snake.position[0] += num_cells
+        if (newhead[0] < 0) {
+            newhead[0] += num_cells
         }
-        if (snake.position[1] < 0) {
-            snake.position[1] += num_cells
+        if (newhead[1] < 0) {
+            newhead[1] += num_cells
         }
 
-        snake.position[0] %= num_cells;
-        snake.position[1] %= num_cells;
+        newhead[0] %= num_cells;
+        newhead[1] %= num_cells;
+
+        snake.position.unshift(newhead)
+        snake.position = [...snake.position]
     }
 
     function updateBaby() {
@@ -89,13 +92,17 @@
     }
 
     function eatBaby() {
-        return snake.position[0] == baby.position[0] && snake.position[1] == baby.position[1]
+        let head = snake.position[0]
+        return head[0] == baby.position[0] && head[1] == baby.position[1]
     }
 
     function game_loop() {
         updateSnake()
         if (eatBaby()) {
             updateBaby()
+        } else {
+            snake.position.pop()
+            snake.position = [...snake.position]
         }
     }
 </script>
