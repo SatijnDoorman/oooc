@@ -11,6 +11,7 @@
     }
     let row = Array.from([ num_cells ], (_, i) => i + 1);
     let cells = []
+    let timeSinceDeath = 0;
 
 
     for (let i = 0; i < num_cells; i++) {
@@ -96,8 +97,22 @@
         return head[0] == baby.position[0] && head[1] == baby.position[1]
     }
 
+    function hitsSelf() {
+        let head = snake.position[0]
+        let body = [...snake.position]
+        body.shift()
+        return arrayContainsArray(body, head)
+    }
     function game_loop() {
+
         updateSnake()
+        if (global_state == 'game over') {
+            timeSinceDeath += 1;
+        }
+        
+        if (hitsSelf()) {
+            global_state = 'game over'
+        }
         if (eatBaby()) {
             updateBaby()
         } else {
@@ -137,6 +152,13 @@
     <h1> hello snake lord lets go yeah </h1>
 {/if}
 
+{#if global_state == 'game over'}
+    {#if timeSinceDeath < 20}
+        <h1> Enne jong doed? </h1>
+    {:else}
+        <h1> Pik duij op refresh jong homo </h1>
+    {/if}
+{/if}
 <div class="grid" style="--grid-size: {num_cells}">
     {#each cells as cell}
         <div class="cell" 
