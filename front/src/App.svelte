@@ -1,24 +1,48 @@
 <script>
-    let global_state = 'start'
-    let num_cells= 10
-    let snake = {
-        'position': [[0,0], [1,0],[2,0]],
-        'direction': 'up'
-    }
-    let baby = {
-        'position': [2,1],
-        'direction': 'up'
-    }
+    // todo
+    // mag niet terug
+
+    // grid
+    let num_cells= 50
     let row = Array.from([ num_cells ], (_, i) => i + 1);
     let cells = []
-    let timeSinceDeath = 0;
-
-
     for (let i = 0; i < num_cells; i++) {
       for (let j = 0; j < num_cells; j++) {
         cells.push([i,j]);
       }
     }
+    
+    // game loop
+    let interval;
+    let difficulty = 30;
+
+    //game state
+
+    let global_state;
+    let snake;
+    let baby;
+
+    function initializeGame() {
+        global_state = 'start'
+        let centerCell1 = [Math.floor(num_cells / 2), Math.floor(num_cells / 2)]
+        let centerCell2 = [...centerCell1]
+        centerCell2[1] += 1
+        let centerCell3 = [...centerCell1]
+        centerCell3[1] += 2
+
+        snake = {
+            'position': [centerCell1, centerCell2, centerCell3],
+            'direction': 'up'
+        }
+        let initialBaby = [...centerCell1]
+        initialBaby[0] += 4
+
+        baby = {
+            'position': initialBaby,
+            'direction': 'up'
+        }
+    }
+    initializeGame()
 
     function arrayContainsArray(outerArray, innerArray) {
       return outerArray.some(outerElement => {
@@ -44,26 +68,43 @@
     }
     function handleKeyDown(event) {
         if (['a', 'ArrowLeft'].includes(event.key)) {
-            snake.direction = 'left';
+            if (snake.direction != 'right') {
+                snake.direction = 'left';
+            }
         } else if (['d', 'ArrowRight'].includes(event.key)) {
-            snake.direction = 'right';
+            if (snake.direction != 'left') {
+                snake.direction = 'right';
+            }
         } else if (['w', 'ArrowUp'].includes(event.key)) {
-            snake.direction = 'up';
+            if (snake.direction != 'down') {
+                snake.direction = 'up';
+            }
         } else if (['s', 'ArrowDown'].includes(event.key)) {
-            snake.direction = 'down';
+            if (snake.direction != 'up') {
+                snake.direction = 'down';
+            }
         }
       }
 
     function start_game() {
+        initializeGame()
         global_state = 'playing'
         console.log('starting game');
-        let interval = setInterval(game_loop,200);
+        interval = setInterval(game_loop, difficulty);
+    }
+
+    function die() {
+        global_state = 'start'
+        console.log('game over');
+        clearInterval(interval);
     }
 
     function updateSnake() {
 
         let newhead = [...snake.position[0]]
-        
+
+        let newsnake = JSON.parse(JSON.stringify(snake));
+
         if (snake.direction === 'right') {
             newhead[1]++;
         } else if (snake.direction === 'down') {
@@ -74,22 +115,18 @@
             newhead[0]--;
         }
 
-        if (newhead[0] < 0) {
-            newhead[0] += num_cells
-        }
-        if (newhead[1] < 0) {
-            newhead[1] += num_cells
-        }
-
-        newhead[0] %= num_cells;
-        newhead[1] %= num_cells;
-
-        snake.position.unshift(newhead)
-        snake.position = [...snake.position]
+        newsnake.position.unshift(newhead)
+        newsnake.position = [...newsnake.position]
+        return newsnake
     }
 
     function updateBaby() {
-        baby.position = random_cell()
+        while (true) {
+            baby.position = random_cell()
+            if (!arrayContainsArray(snake.position, baby.position)) {
+                break
+            }            
+        } 
     }
 
     function eatBaby() {
@@ -97,22 +134,28 @@
         return head[0] == baby.position[0] && head[1] == baby.position[1]
     }
 
-    function hitsSelf() {
-        let head = snake.position[0]
-        let body = [...snake.position]
+    function hitsSelf(newsnake) {
+        let head = newsnake.position[0]
+        let body = [...newsnake.position]
         body.shift()
         return arrayContainsArray(body, head)
     }
+
+    function hitsWall(newsnake) {
+        let head = newsnake.position[0]
+
+        return head[0] < 0 || head[0] >= num_cells || head[1] < 0 || head[1] >= num_cells
+    }
+
     function game_loop() {
 
-        updateSnake()
-        if (global_state == 'game over') {
-            timeSinceDeath += 1;
-        }
+        let newsnake = updateSnake()
         
-        if (hitsSelf()) {
-            global_state = 'game over'
+        if (hitsSelf(newsnake) || hitsWall(newsnake)) {
+            die()
+            return
         }
+        snake = newsnake
         if (eatBaby()) {
             updateBaby()
         } else {
@@ -134,11 +177,11 @@
     height: 300px;
   }
   .cell {
-    border: 2px solid black;
+    border: 0px solid black;
   }
 
   .cell.snake{
-      background-color: black;
+    background-color: black;
   }
 
   .cell.baby{
@@ -152,13 +195,6 @@
     <h1> hello snake lord lets go yeah </h1>
 {/if}
 
-{#if global_state == 'game over'}
-    {#if timeSinceDeath < 20}
-        <h1> Enne jong doed? </h1>
-    {:else}
-        <h1> Pik duij op refresh jong homo </h1>
-    {/if}
-{/if}
 <div class="grid" style="--grid-size: {num_cells}">
     {#each cells as cell}
         <div class="cell" 
