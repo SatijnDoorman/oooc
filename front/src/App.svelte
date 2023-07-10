@@ -1,6 +1,7 @@
 <script>
     // todo
     // mag niet terug
+    // hoi
 
     // grid
     let num_cells= 50
