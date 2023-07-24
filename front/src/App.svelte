@@ -1,7 +1,4 @@
 <script>
-  // todo
-  // mag niet terug
-
   // grid
   let num_cells = 15;
   let row = Array.from([num_cells], (_, i) => i + 1);
