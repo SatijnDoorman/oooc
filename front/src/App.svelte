@@ -11,7 +11,8 @@
 
   // game loop
   let interval;
-  let difficulty = 500;
+  let animationFrame;
+  let difficulty = 20;
 
   //game state
 
@@ -99,13 +100,17 @@
     initializeGame();
     global_state = "playing";
     console.log("starting game");
-    interval = setInterval(game_loop, difficulty);
+
+    animationFrame = requestAnimationFrame(game_loop);
+
+    // interval = setInterval(game_loop, difficulty);
   }
 
   function die() {
     global_state = "start";
     console.log("game over");
-    clearInterval(interval);
+    cancelAnimationFrame(animationFrame);
+    // clearInterval(interval);
   }
 
   function updateSnake() {
@@ -157,23 +162,33 @@
     );
   }
 
+  let lastUpdate = 0;
   function game_loop() {
-    let newsnake = updateSnake();
+    if (lastUpdate % difficulty === 0) {
+      let newsnake = updateSnake();
 
-    if (hitsSelf(newsnake) || hitsWall(newsnake)) {
-      die();
-      return;
+      if (hitsSelf(newsnake) || hitsWall(newsnake)) {
+        die();
+        return;
+      }
+      snake = newsnake;
+      if (eatBaby()) {
+        updateBaby();
+        mouthOpen = true;
+        score++;
+        if (score % 5 === 0) {
+          difficulty = Math.max(1, difficulty - 5);
+          alert("NOG SNELLER!");
+        }
+      } else {
+        mouthOpen = false;
+        snake.position.pop();
+        snake.position = [...snake.position];
+      }
     }
-    snake = newsnake;
-    if (eatBaby()) {
-      updateBaby();
-      mouthOpen = true;
-      score++;
-    } else {
-      mouthOpen = false;
-      snake.position.pop();
-      snake.position = [...snake.position];
-    }
+
+    lastUpdate++;
+    requestAnimationFrame(game_loop);
   }
 </script>
 
@@ -181,6 +196,8 @@
 {#if global_state == "start"}
   <h1>hello snake lord lets go yeah</h1>
 {/if}
+
+<p>Score: {score}</p>
 
 <div class="grid" style="--grid-size: {num_cells}">
   {#each cells as cell}
